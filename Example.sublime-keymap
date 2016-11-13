@@ -17,6 +17,15 @@
 		}
 	},
 
+	// Convert to expanded format (break selectors, align properties)
+	{
+		"keys": ["ctrl+alt+a"],
+		"command": "css_format",
+		"args": {
+			"action": "expand-bs-al"
+		}
+	},
+
 	// Convert to Expanded Format (Break Selectors)
 	{
 		"keys": ["ctrl+alt+v"],

@@ -16,6 +16,11 @@
 				"args": { "action": "expand-bs"}
 			},
 			{
+				"caption": "Expanded (Break Selectors, Align Properties)",
+				"command": "css_format",
+				"args": { "action": "expand-bs-al"}
+			},
+			{
 				"caption": "Compact",
 				"command": "css_format",
 				"args": { "action": "compact" }

@@ -13,6 +13,7 @@
 	// On Save Action
 	//   "expand"        : Expanded
 	//   "expand-bs"     : Expanded (Break Selectors)
+	//   "expand-bs-al"  : Expanded (Break Selectors, Align Properties)
 	//   "compact"       : Compact
 	//   "compact-ns"    : Compact (No Spaces)
 	//   "compact-bs"    : Compact (Break Selectors)

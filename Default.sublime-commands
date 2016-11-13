@@ -17,6 +17,15 @@
 		}
 	},
 
+	// Convert to Expanded Format (Break Selectors, Align Properties)
+	{
+		"caption": "Format CSS: Expanded (Break Selectors, Align Properties)",
+		"command": "css_format",
+		"args": {
+			"action": "expand-bs-al"
+		}
+	},
+
 	// Convert to Compact Format
 	{
 		"caption": "Format CSS: Compact",

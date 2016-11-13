@@ -14,6 +14,7 @@ def format_css(code, action='compact', indentation='\t'):
 	actFuns = {
 		'expand'		: expand_rules,
 		'expand-bs'		: expand_rules,			# expand (break selectors)
+		'expand-bs-al'	: expand_rules,			# expand (break selectors, align properties)
 		'compact'		: compact_rules,
 		'compact-bs'	: compact_rules,		# compact (break selectors)
 		'compact-ns'	: compact_ns_rules,		# compact (no spaces)
@@ -52,6 +53,9 @@ def format_css(code, action='compact', indentation='\t'):
 	code = re.sub(r',[\d\s\.\#\+>~:]*\{', '{', code)	# remove invalid selectors without \w
 	code = re.sub(r'([;,])\1+', r'\1', code)			# remove repeated ;,
 
+	# Add last semicolon
+	code = re.sub(r'([A-Za-z-]+(?:\+_?)?:[^;\{\}:]+)}', r'\1;}', code)
+
 	if action != 'compress':
 		# Group selector
 		if re.search('-bs', action):
@@ -70,14 +74,17 @@ def format_css(code, action='compact', indentation='\t'):
 	# Process action rules
 	code = actFuns[action](code)
 
+	if action == 'expand-bs-al':
+		# Align properties
+		code = align_properties(code)
 
 	if action == 'compress':
 		# Remove last semicolon
 		code = code.replace(';}', '}')
 	else:
 		# Add blank line between each block in `expand-bs` mode
-		if action == 'expand-bs':
-			code = re.sub(r'\}\s*', '}\n\n', code)		# double \n after }
+		if re.search('expand-bs', action):
+			code = re.sub(r'\}(?!\s*\})\s*', '}\n\n', code)		# double \n after }
 
 		# Fix comments
 		code = re.sub(r'\s*!comment!\s*@', '\n\n!comment!\n@', code)
@@ -89,7 +96,7 @@ def format_css(code, action='compact', indentation='\t'):
 			code = re.sub(r'[ \t]*!comment!', comments[i], code, 1)
 
 		# Indent
-		code = indent_code(code, indentation)
+		code = indent_code(code, indentation, re.search('-al', action))
 
 	# Backfill strings
 	for i in range(len(strings)):
@@ -214,8 +221,42 @@ def break_selectors(code):
 	return code
 
 
+# Align Properties
+def align_properties(code):
+	block = code.split('}')
+	for i in range(len(block)):
+
+		b = block[i].split('{')
+		bLen = len(b)
+		for j in range(bLen):
+
+			if re.search(r'[A-Za-z-]+\s*:(?:[^;]+;|[^;\)]+\))', b[j]):
+				s = b[j].split(';')
+				sLen = len(s)
+				pMax = 0
+
+				for k in range(sLen):
+					m = re.search(r'([A-Za-z-]+)\s*:\s*', s[k])	# get properties' :
+					if m is not None:
+						pMax = max(pMax, len(m.group(1)))
+
+				for k in range(sLen):
+					m = re.search(r'([A-Za-z-]+)\s*:\s*', s[k])	# get properties' :
+					if m is not None:
+						t = m.group(1) + ' ' * (pMax - len(m.group(1)) + 1) + ': '
+						s[k] = re.sub(r'[A-Za-z-]+\s*:\s*', t, s[k])
+
+				b[j] = ';'.join(s)
+
+		block[i] = '{'.join(b)
+
+	code = '}'.join(block)
+
+	return code
+
+
 # Code Indent
-def indent_code(code, indentation='\t'):
+def indent_code(code, indentation='\t', alignCb=False):
 	lines = code.split('\n')
 	level = 0
 	inComment = False
@@ -241,7 +282,7 @@ def indent_code(code, indentation='\t'):
 
 			# Trim
 			lines[i] = re.sub(r'^' + outPrefix + '(.*)\s*$', r'\1', lines[i])
-		
+
 		# Is next line in comment?
 		commentQuotes = re.findall(r'\/\*|\*\/', lines[i])
 		for quote in commentQuotes:
@@ -252,7 +293,7 @@ def indent_code(code, indentation='\t'):
 
 		# Quote level adjustment
 		nextLevel = level + adjustment
-		thisLevel = level if adjustment > 0 else nextLevel
+		thisLevel = level if adjustment > 0 or alignCb else nextLevel
 		level = nextLevel
 
 		# Add indentation
